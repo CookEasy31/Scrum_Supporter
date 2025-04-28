@@ -39,9 +39,6 @@ PAGE_CONFIG = {
     "initial_sidebar_state": "expanded"
 }
 
-# --- System Prompt (Unverändert lassen!) ---
-# Dieser Prompt wird direkt in der API-Funktion verwendet und hier nicht separat definiert.
-
 # --- Hilfsfunktionen ---
 
 @st.cache_data(ttl=3600)  # Cache für 1 Stunde, um Änderungen an der PDF zu ermöglichen
@@ -139,7 +136,7 @@ def get_ai_suggestions(problem_description):
         genai.configure(api_key=API_KEY)
         model = genai.GenerativeModel(MODEL_NAME)
 
-        # Erstelle den Prompt mit dem System-Kontext
+        # Erstelle den Prompt mit dem System-Kontext und der strukturierten Ausgabe
         prompt = f"""
 Du bist ein Expertenassistent, der einem Creative Director bei der Betreuung von Universitätsprojekten hilft.
 Die Projekte basieren auf den Methoden im Handbuch 'Öffentliches Gestalten'.
@@ -159,6 +156,27 @@ AUFGABE:
    - Die exakten Seitenzahlen des gesamten Übungsabschnitts (von Anfang bis Ende).
    - Die exakte Seitenzahl, auf der der "Vorgehen"-Abschnitt beginnt.
    - Alle angegebenen Metadaten zur Übung wie Zeitrahmen, Niveau, benötigte Materialien und Rollen.
+
+ANTWORTFORMAT:
+Strukturiere deine Antwort folgendermaßen:
+
+## 🔍 Problembeschreibung
+[Kurze Zusammenfassung des Kernproblems in 1-2 Sätzen]
+
+## 💡 Empfohlene Übung(en)
+### 📋 [Titel der Übung 1]
+- **Seiten:** [Seitenbereich z.B. 45-48]
+- **Vorgehen beginnt auf:** Seite [Seitenzahl]
+- **Zeitrahmen:** [Zeit aus dem Handbuch]
+- **Niveau:** [Niveau aus dem Handbuch]
+- **Materialien:** [Benötigte Materialien]
+- **Rollen:** [Benötigte Rollen]
+
+### 📋 [Titel der Übung 2] (falls nötig)
+[Gleiche Struktur wie oben]
+
+## ✅ Warum diese Übung(en) passen
+[Erklärung, wie die Übung(en) das Problem adressieren]
 """
         # Erstelle die Anfrage mit PDF und Prompt
         with open(PDF_PATH, 'rb') as pdf_file:
@@ -421,9 +439,9 @@ def main():
 
     # PDF-Daten initialisieren und prüfen
     if not initialize_pdf_data(PDF_PATH):
-         st.error("PDF konnte nicht geladen werden. Die Anwendung kann nicht fortfahren.")
-         render_footer()
-         return # Abbruch, wenn PDF nicht geladen
+        st.error("PDF konnte nicht geladen werden. Die Anwendung kann nicht fortfahren.")
+        render_footer()
+        return # Abbruch, wenn PDF nicht geladen
 
     render_introduction()
 
@@ -443,8 +461,8 @@ def main():
         if not problem_description or len(problem_description) < 20:
             st.warning("Bitte geben Sie eine aussagekräftige Problembeschreibung ein (mind. 20 Zeichen).")
         elif not API_KEY:
-             # Fehler wird bereits in get_ai_suggestions behandelt, hier zur Sicherheit
-             st.error("Google API-Schlüssel fehlt. Bitte konfigurieren.")
+            # Fehler wird bereits in get_ai_suggestions behandelt, hier zur Sicherheit
+            st.error("Google API-Schlüssel fehlt. Bitte konfigurieren.")
         else:
             with st.spinner("KI analysiert das Problem und sucht nach Übungen..."):
                 suggestions = get_ai_suggestions(problem_description)
@@ -452,11 +470,11 @@ def main():
             st.markdown("---") # Trennlinie vor den Ergebnissen
             st.subheader("Ergebnis der Analyse")
             if suggestions:
-                 # Ergebnisse in der gestylten Karte anzeigen
-                 st.markdown(f'<div class="result-card">{suggestions}</div>', unsafe_allow_html=True)
+                # Ergebnisse in der gestylten Karte anzeigen
+                st.markdown(f'<div class="result-card">{suggestions}</div>', unsafe_allow_html=True)
             else:
-                 # Falls die API-Funktion None zurückgibt (wegen API-Fehler etc.)
-                 st.error("Es konnten keine Vorschläge generiert werden. Überprüfen Sie die Fehlermeldungen.")
+                # Falls die API-Funktion None zurückgibt (wegen API-Fehler etc.)
+                st.error("Es konnten keine Vorschläge generiert werden. Überprüfen Sie die Fehlermeldungen.")
 
     # Footer immer anzeigen
     render_footer()
