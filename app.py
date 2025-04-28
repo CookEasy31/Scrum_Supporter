@@ -161,13 +161,26 @@ AUFGABE:
    - Alle angegebenen Metadaten zur Übung wie Zeitrahmen, Niveau, benötigte Materialien und Rollen.
 """
         # Erstelle die Anfrage mit PDF und Prompt
-        response = model.generate_content([
-            genai.types.Part.from_bytes(
-                data=st.session_state.pdf_data,
-                mime_type='application/pdf'
-            ),
-            prompt
-        ])
+        with open(PDF_PATH, 'rb') as pdf_file:
+            pdf_data = pdf_file.read()
+            
+        response = model.generate_content(
+            contents=[
+                {
+                    "parts": [
+                        {
+                            "inline_data": {
+                                "mime_type": "application/pdf",
+                                "data": pdf_data
+                            }
+                        },
+                        {
+                            "text": prompt
+                        }
+                    ]
+                }
+            ]
+        )
 
         return response.text
 
